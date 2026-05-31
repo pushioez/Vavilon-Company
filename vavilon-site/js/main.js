@@ -11,13 +11,8 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const smoothstep = (a, b, x) => { x = clamp((x - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
 
 /* ------------------------------------------------------------
-   INTRO loader — sketch the logo, then reveal the story
+   INTRO loader — show the logo, then reveal the story
 ------------------------------------------------------------ */
-document.querySelectorAll(".intro__logo .draw").forEach((p, i) => {
-  const len = p.getTotalLength();
-  p.style.setProperty("--len", len.toFixed(0));
-  p.style.animationDelay = (0.1 + i * 0.12) + "s";
-});
 window.addEventListener("load", () => {
   measure();
   update();

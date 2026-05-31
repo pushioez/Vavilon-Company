@@ -7,6 +7,7 @@
   --fog-1:#a3a9af;
   --fog-2:#838a91;
   --fog-3:#5f666e;
+  --accent:#f53b6b;
   --serif:"Cormorant Garamond",Georgia,serif;
   --sans:"Space Grotesk",system-ui,sans-serif;
   --mono:"JetBrains Mono",ui-monospace,monospace;
@@ -34,30 +35,36 @@ img{display:block}
 ============================================================ */
 .intro{
   position:fixed;inset:0;z-index:200;
-  background:#e9edf0;
+  background:radial-gradient(120% 100% at 50% 42%, #14181d 0%, #080a0c 100%);
   display:grid;place-items:center;
   transition:opacity .9s ease, visibility .9s;
 }
 .intro.is-done{opacity:0;visibility:hidden;pointer-events:none}
-.intro__inner{display:flex;flex-direction:column;align-items:center;gap:18px}
-.intro__logo{width:min(46vw,220px);height:auto;color:#14181c}
-.intro__logo .draw{
-  stroke:#14181c;stroke-width:1.2;stroke-linecap:round;stroke-linejoin:round;
-  fill:none;
-  stroke-dasharray:var(--len,400);stroke-dashoffset:var(--len,400);
-  animation:draw 1.5s ease forwards;
+.intro__inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px}
+.intro__glow{
+  position:absolute;left:50%;top:38%;width:46%;aspect-ratio:1/1;z-index:-1;
+  transform:translate(-50%,-50%);border-radius:50%;pointer-events:none;
+  background:radial-gradient(circle, rgba(245,59,107,.5) 0%, transparent 64%);
+  filter:blur(18px);opacity:0;animation:glowPulse 3.4s ease-in-out .9s infinite;
 }
-@keyframes draw{to{stroke-dashoffset:0}}
-.intro__word{
-  font-family:var(--mono);letter-spacing:.65em;font-size:13px;
-  color:#14181c;padding-left:.65em;
-  opacity:0;animation:fadeUp .8s ease 1.2s forwards;
+.intro__logo{
+  width:min(64vw,300px);height:auto;
+  animation:logoIn 1.3s var(--ease) both, logoFloat 5s ease-in-out 1.3s infinite;
 }
 .intro__sub{
-  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:#6b747c;
-  text-transform:uppercase;opacity:0;animation:fadeUp .8s ease 1.5s forwards;
+  font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.5);
+  text-transform:uppercase;opacity:0;animation:fadeUp .8s ease 1.4s forwards;
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+@keyframes logoIn{
+  from{opacity:0;transform:scale(.9) translateY(8px);filter:blur(8px)}
+  to{opacity:1;transform:none;filter:blur(0)}
+}
+@keyframes logoFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+@keyframes glowPulse{
+  0%,100%{opacity:.3;transform:translate(-50%,-50%) scale(.92)}
+  50%{opacity:.65;transform:translate(-50%,-50%) scale(1.06)}
+}
 
 /* ============================================================
    CONSTANT FOG BACKGROUND
@@ -101,12 +108,21 @@ img{display:block}
 .art--a img,.art--a2 img{object-position:50% 42%}
 
 /* slowly rotating metal ring (block 5) — spin on inner img,
-   wrapper handles enter/exit translate from JS */
+   wrapper handles enter/exit translate from JS.
+   The wrapper carries a circular mask in vmin units so the spinning
+   rectangle's corners feather into the fog instead of showing hard seams.
+   vmin (not %) ties the mask to the smaller viewport axis — the same axis
+   that governs how far a centred, rotating rectangle is guaranteed to reach —
+   so the feathered edge sits inside the image at every angle and aspect ratio. */
+.art--e{
+  -webkit-mask-image:radial-gradient(circle 62vmin at 50% 50%, #000 60%, transparent 100%);
+  mask-image:radial-gradient(circle 62vmin at 50% 50%, #000 60%, transparent 100%);
+}
 .art--e img{
   animation:ringSpin 26s linear infinite;
   transform-origin:50% 50%;
 }
-@keyframes ringSpin{from{transform:rotate(0deg) scale(1.16)}to{transform:rotate(360deg) scale(1.16)}}
+@keyframes ringSpin{from{transform:rotate(0deg) scale(1.36)}to{transform:rotate(360deg) scale(1.36)}}
 
 /* ============================================================
    ATMOSPHERE + HUD FRAME
@@ -131,12 +147,17 @@ img{display:block}
 .ui--bottom{bottom:0;min-height:56px;padding-bottom:env(safe-area-inset-bottom);
   justify-content:space-between;align-items:center}
 
-.brand{display:flex;align-items:flex-start;gap:11px}
-.brand__mark{width:34px;height:26px;color:var(--ink);margin-top:3px}
-.brand__mark svg{width:100%;height:100%}
+.brand{display:flex;align-items:center;gap:11px}
+.brand__mark{width:42px;height:42px;flex:none;
+  background:url("../assets/logo.png") no-repeat;
+  background-size:96px auto;background-position:-27px -15px;
+  filter:drop-shadow(0 2px 10px rgba(0,0,0,.55));
+  transition:filter .4s var(--ease)}
+.brand:hover .brand__mark{filter:drop-shadow(0 0 12px rgba(245,59,107,.55))}
 .brand__block{display:flex;flex-direction:column;gap:5px}
 .brand__name{font-family:var(--sans);font-weight:700;letter-spacing:.22em;font-size:17px;
   line-height:1;text-transform:uppercase;color:var(--ink);text-shadow:0 1px 18px rgba(0,0,0,.45)}
+.brand__on{color:var(--accent)}
 .brand__name sup{font-size:.42em;letter-spacing:0;font-weight:500;vertical-align:super}
 .brand__cr{font-family:var(--mono);font-size:9px;line-height:1.5;letter-spacing:.14em;
   color:var(--faint);text-transform:uppercase}
