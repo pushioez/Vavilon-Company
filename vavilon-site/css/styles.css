@@ -40,6 +40,8 @@ img{display:block}
   transition:opacity .9s ease, visibility .9s;
 }
 .intro.is-done{opacity:0;visibility:hidden;pointer-events:none}
+/* once dismissed, halt the infinite glow/float so they don't keep ticking */
+.intro.is-done .intro__glow,.intro.is-done .intro__logo{animation:none}
 .intro__inner{position:relative;display:flex;flex-direction:column;align-items:center;gap:12px}
 .intro__glow{
   position:absolute;left:50%;top:38%;width:46%;aspect-ratio:1/1;z-index:-1;
@@ -75,12 +77,13 @@ img{display:block}
   background:
     radial-gradient(120% 90% at 50% 38%, var(--fog-1) 0%, var(--fog-2) 46%, var(--fog-3) 100%);
 }
+/* static noise layer — no transform animation. Continuously transforming a
+   full-screen, screen-blended layer forced a 60fps recomposite even while
+   idle; the drift gradients below carry the motion at a fraction of the cost. */
 .fog__noise{
   position:absolute;inset:-20%;width:140%;height:140%;
   opacity:.5;mix-blend-mode:screen;
-  animation:fogPan 60s linear infinite alternate;
 }
-@keyframes fogPan{from{transform:translate3d(-3%,-2%,0) scale(1.05)}to{transform:translate3d(3%,2%,0) scale(1.18)}}
 .fog__drift{position:absolute;inset:0;opacity:.5;mix-blend-mode:screen}
 .fog__drift--a{
   background:radial-gradient(45% 38% at 28% 62%, rgba(220,228,234,.5), transparent 70%);
@@ -263,10 +266,13 @@ main{position:relative;z-index:10}
 .btn--lg{padding:18px 38px;font-size:12.5px;margin-top:34px}
 .btn--solid{background:var(--ink);color:#15181b;border-color:var(--ink)}
 .btn--solid:hover{transform:translateY(-2px);box-shadow:0 14px 40px -12px rgba(255,255,255,.5)}
-.btn--line{color:var(--ink);border-color:var(--line);background:rgba(255,255,255,.04);backdrop-filter:blur(4px)}
-.btn--line:hover{border-color:var(--ink);background:rgba(255,255,255,.1);transform:translateY(-2px)}
-.btn--terminal{color:var(--ink);border-color:rgba(255,255,255,.4);background:rgba(10,13,16,.5);
-  backdrop-filter:blur(6px);box-shadow:inset 0 0 0 0 rgba(255,255,255,0)}
+/* no backdrop-filter: blurring the (moving) backdrop re-rasterised every
+   scroll frame while these scrolled into view. Slightly more opaque
+   backgrounds keep the same frosted-glass read without the per-frame cost. */
+.btn--line{color:var(--ink);border-color:var(--line);background:rgba(255,255,255,.08)}
+.btn--line:hover{border-color:var(--ink);background:rgba(255,255,255,.14);transform:translateY(-2px)}
+.btn--terminal{color:var(--ink);border-color:rgba(255,255,255,.4);background:rgba(10,13,16,.8);
+  box-shadow:inset 0 0 0 0 rgba(255,255,255,0)}
 .btn--terminal:hover{border-color:#cfe6ff;box-shadow:0 0 34px -4px rgba(207,230,255,.55),inset 0 0 22px -10px rgba(207,230,255,.5);
   text-shadow:0 0 14px rgba(207,230,255,.7);transform:translateY(-2px)}
 .btn__prompt{font-weight:500;color:#bcd4ea;letter-spacing:0}
@@ -277,9 +283,9 @@ main{position:relative;z-index:10}
 .contacts{margin:44px auto 0;display:grid;gap:1px;padding:1px;max-width:640px;
   grid-template-columns:repeat(2,1fr);background:var(--line-soft);
   border:1px solid var(--line-soft);border-radius:5px;overflow:hidden;text-align:left}
-.contact{background:rgba(18,22,26,.42);backdrop-filter:blur(8px);padding:22px 24px;
+.contact{background:rgba(18,22,26,.82);padding:22px 24px;
   display:flex;flex-direction:column;gap:7px;transition:.35s var(--ease)}
-.contact:hover{background:rgba(30,36,42,.7);transform:translateY(-2px)}
+.contact:hover{background:rgba(30,36,42,.92);transform:translateY(-2px)}
 .contact__k{font-family:var(--mono);font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:var(--faint)}
 .contact__v{font-size:17px;color:var(--ink)}
 
@@ -333,14 +339,9 @@ main{position:relative;z-index:10}
    keeps the full look while phones stay at 60fps.
 ============================================================ */
 @media (max-width:860px), (hover:none) and (pointer:coarse){
-  .fog__noise{display:none}               /* animated feTurbulence — the biggest cost */
+  .fog__noise{display:none}               /* drop the noise layer entirely on phones */
   .grain{display:none}                     /* full-screen blend-mode overlay */
-  .fog__drift{mix-blend-mode:normal;opacity:.4}
-  .btn--line,.btn--terminal,.contact{
-    backdrop-filter:none;-webkit-backdrop-filter:none}
-  .contact{background:rgba(18,22,26,.82)}
-  .btn--line{background:rgba(255,255,255,.07)}
-  .btn--terminal{background:rgba(10,13,16,.8)}
+  .fog__drift{mix-blend-mode:normal;opacity:.4}  /* plain compositing, no screen blend */
 }
 
 @media(prefers-reduced-motion:reduce){

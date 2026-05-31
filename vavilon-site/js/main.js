@@ -69,9 +69,11 @@ function roleState(blk, mode, t) {
     case 3: // c.jpg — stone "IP"
       if (mode === "enter") return { o: t, tf: tY(lerp(120, 0, t)) };
       return { o: 1 - t, tf: tY(lerp(0, -130, t)) };
-    case 4: // d.jpg — ice cube: enters from below, DISSOLVES on exit
+    case 4: // d.jpg — ice cube: enters from below, "dissolves" (scale up + fade) on exit.
+      // No blur() here: animating a filter on a full-screen image re-rasterised
+      // every scroll frame, which janked this transition on both up- and down-scroll.
       if (mode === "enter") return { o: t, tf: tY(lerp(120, 0, t)) };
-      return { o: 1 - t, tf: `scale(${lerp(1, 1.08, t)})`, fl: `blur(${lerp(0, 8, t)}px)` };
+      return { o: 1 - t, tf: `scale(${lerp(1, 1.14, t)})` };
     case 5: // e.jpg — metal ring: rises + un-tilts on enter, flies up on exit
       if (mode === "enter") return { o: t, tf: `translate3d(0,${lerp(80, 0, t)}%,0) rotate(${lerp(-15, 0, t)}deg)` };
       return { o: 1 - t, tf: tY(lerp(0, -150, t)) };

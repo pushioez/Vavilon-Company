@@ -50,7 +50,7 @@ python3 -m http.server 8778
 ## Контакты
 
 - Telegram: [@VavilonCloud](https://t.me/VavilonCloud)
-- Телефон (только Telegram): [+7 926 443 6626](https://t.me/+79264436626)
+- Телефон (только Telegram): [+7 965 877 47 32](https://t.me/+79658774732)
 - Почта: vaviloncompany@inbox.ru
 - Портфолио: [t.me/Vavilon_Portfolio](https://t.me/Vavilon_Portfolio)
 
