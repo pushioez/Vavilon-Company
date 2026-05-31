@@ -93,8 +93,8 @@ img{display:block}
 .art{
   position:absolute;inset:0;
   opacity:0;
-  will-change:transform,opacity,filter;
-  transform:translate3d(0,0,0);
+  /* will-change is toggled from JS onto only the 2 transitioning layers,
+     so we don't keep 6 full-screen GPU layers alive on mobile */
 }
 .art img{width:100%;height:100%;object-fit:cover}
 .art--a{opacity:1}                 /* first paint before JS kicks in */
@@ -127,8 +127,9 @@ img{display:block}
 .ui{position:fixed;left:0;right:0;z-index:30;display:flex;
   padding:0 var(--pad);pointer-events:none}
 .ui a,.ui button{pointer-events:auto}
-.ui--top{top:0;padding-top:22px;justify-content:space-between;align-items:flex-start}
-.ui--bottom{bottom:0;height:56px;justify-content:space-between;align-items:center}
+.ui--top{top:0;padding-top:calc(22px + env(safe-area-inset-top));justify-content:space-between;align-items:flex-start}
+.ui--bottom{bottom:0;min-height:56px;padding-bottom:env(safe-area-inset-bottom);
+  justify-content:space-between;align-items:center}
 
 .brand{display:flex;align-items:flex-start;gap:11px}
 .brand__mark{width:34px;height:26px;color:var(--ink);margin-top:3px}
@@ -164,14 +165,14 @@ img{display:block}
   box-shadow:0 0 9px rgba(84,208,138,.7);animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
 
-.rail{position:fixed;top:0;right:0;width:2px;height:100vh;z-index:25;background:var(--line-soft)}
+.rail{position:fixed;top:0;right:0;width:2px;height:100vh;height:100dvh;z-index:25;background:var(--line-soft)}
 .rail__fill{width:100%;height:0;background:linear-gradient(var(--ink),rgba(255,255,255,.3))}
 
 /* ============================================================
    PANELS / CONTENT
 ============================================================ */
 main{position:relative;z-index:10}
-.panel{position:relative;min-height:100vh;padding:120px var(--pad) 110px;
+.panel{position:relative;min-height:100vh;min-height:100dvh;padding:120px var(--pad) 110px;
   display:flex;flex-direction:column;justify-content:center}
 .panel--left{align-items:flex-start}
 .panel--center{align-items:center;text-align:center}
@@ -292,19 +293,38 @@ main{position:relative;z-index:10}
   .brand__cr{display:none}
 }
 @media(max-width:640px){
-  .ui--top{padding-top:16px}
+  .ui--top{padding-top:calc(16px + env(safe-area-inset-top))}
   .panel{padding:104px var(--pad) 96px}
   .hold,.hold--hero{max-width:none}
   .cta-row{flex-direction:column;align-items:stretch;width:100%}
   .btn{width:100%}
   .contacts{grid-template-columns:1fr}
-  .scrollhint{bottom:30px}
-  .foot{position:static;margin-top:42px;flex-direction:column;gap:6px;text-align:center}
+  .scrollhint{display:none}                /* would collide with the bottom HUD bar */
+  .foot{position:static;margin-top:42px;padding-bottom:env(safe-area-inset-bottom);
+    flex-direction:column;gap:6px;text-align:center}
   .hud-shade--top{height:30vh}
   .display{font-size:clamp(40px,13vw,64px)}
 }
+
+/* ============================================================
+   PERFORMANCE — drop GPU/CPU-heavy effects on phones & touch.
+   Targets small screens OR coarse-pointer devices so a desktop
+   keeps the full look while phones stay at 60fps.
+============================================================ */
+@media (max-width:860px), (hover:none) and (pointer:coarse){
+  .fog__noise{display:none}               /* animated feTurbulence — the biggest cost */
+  .grain{display:none}                     /* full-screen blend-mode overlay */
+  .fog__drift{mix-blend-mode:normal;opacity:.4}
+  .btn--line,.btn--terminal,.contact{
+    backdrop-filter:none;-webkit-backdrop-filter:none}
+  .contact{background:rgba(18,22,26,.82)}
+  .btn--line{background:rgba(255,255,255,.07)}
+  .btn--terminal{background:rgba(10,13,16,.8)}
+}
+
 @media(prefers-reduced-motion:reduce){
   *{animation-duration:.001s!important;animation-iteration-count:1!important}
   html{scroll-behavior:auto}
   .art{transition:opacity .3s linear}
+  .fog__noise{display:none}                /* SMIL filter isn't covered by the rule above */
 }

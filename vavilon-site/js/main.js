@@ -19,6 +19,7 @@ document.querySelectorAll(".intro__logo .draw").forEach((p, i) => {
   p.style.animationDelay = (0.1 + i * 0.12) + "s";
 });
 window.addEventListener("load", () => {
+  measure();
   update();
   setTimeout(() => {
     document.getElementById("intro")?.classList.add("is-done");
@@ -33,20 +34,31 @@ const panels = Array.from(document.querySelectorAll("main .panel"));
 const arts = Array.from(document.querySelectorAll(".art"));
 const railFill = document.getElementById("railFill");
 const statusText = document.getElementById("statusText");
+const ringImg = document.querySelector(".art--e img");
 const STATUS = ["01 · OFFER", "02 · IDEA", "03 · PROCESS", "04 · BUILD", "05 · WORKS", "06 · CONTACT"];
+
+/* cached geometry — measured on load/resize/font-ready instead of every
+   scroll frame, so update() never forces a synchronous reflow */
+let centers = [];
+let maxScroll = 0;
+function measure() {
+  centers = panels.map((p) => p.offsetTop + p.offsetHeight / 2);
+  maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+}
 
 /* continuous block position in [0 .. n-1]; integer i = section i centered */
 function blockPos() {
+  const n = centers.length;
+  if (!n) return 0;
   const mid = window.scrollY + window.innerHeight / 2;
-  const centers = panels.map((p) => p.offsetTop + p.offsetHeight / 2);
   if (mid <= centers[0]) return 0;
-  if (mid >= centers[centers.length - 1]) return centers.length - 1;
-  for (let i = 0; i < centers.length - 1; i++) {
+  if (mid >= centers[n - 1]) return n - 1;
+  for (let i = 0; i < n - 1; i++) {
     if (mid >= centers[i] && mid < centers[i + 1]) {
       return i + (mid - centers[i]) / (centers[i + 1] - centers[i]);
     }
   }
-  return centers.length - 1;
+  return n - 1;
 }
 
 const tY = (v) => `translate3d(0,${v}%,0)`;
@@ -75,17 +87,38 @@ function roleState(blk, mode, t) {
   return { o: 0, tf: "none" };
 }
 
+/* skip DOM writes when an artifact's state hasn't changed — most frames only
+   2 of the 6 layers actually move, the rest are parked */
+const lastState = new Map();
 function applyState(el, st) {
-  el.style.opacity = st.o.toFixed(3);
-  el.style.transform = st.tf;
-  el.style.filter = st.fl || "none";
+  const o = st.o.toFixed(3);
+  const tf = st.tf;
+  const fl = st.fl || "none";
+  const prev = lastState.get(el);
+  if (prev && prev.o === o && prev.tf === tf && prev.fl === fl) return;
+  el.style.opacity = o;
+  el.style.transform = tf;
+  el.style.filter = fl;
+  lastState.set(el, { o, tf, fl });
 }
 
+let lastActive = -1;
 function update() {
   const pos = blockPos();
   const i = Math.floor(pos);
   const frac = pos - i;
   const t = smoothstep(0.18, 0.82, frac); // rest at each block, swap mid-way
+
+  // only runs when the active block changes (not every frame):
+  // promote just the 2 transitioning layers, and pause the ring when off-screen
+  if (i !== lastActive) {
+    for (const el of arts) {
+      const idx = +el.dataset.block - 1;
+      el.style.willChange = (idx === i || idx === i + 1) ? "transform,opacity" : "auto";
+    }
+    if (ringImg) ringImg.style.animationPlayState = Math.abs(i - 4) <= 1 ? "running" : "paused";
+    lastActive = i;
+  }
 
   for (const el of arts) {
     const blk = +el.dataset.block;       // 1..6
@@ -98,9 +131,8 @@ function update() {
     applyState(el, st);
   }
 
-  // scroll rail
-  const max = document.documentElement.scrollHeight - window.innerHeight;
-  if (railFill) railFill.style.height = (max > 0 ? clamp(window.scrollY / max, 0, 1) * 100 : 0).toFixed(2) + "%";
+  // scroll rail (uses cached maxScroll)
+  if (railFill) railFill.style.height = (maxScroll > 0 ? clamp(window.scrollY / maxScroll, 0, 1) * 100 : 0).toFixed(2) + "%";
 
   // status readout
   const b = clamp(Math.round(pos), 0, STATUS.length - 1);
@@ -114,9 +146,12 @@ function onScroll() {
     requestAnimationFrame(() => { update(); ticking = false; });
   }
 }
+function onResize() { measure(); update(); }
 window.addEventListener("scroll", onScroll, { passive: true });
-window.addEventListener("resize", onScroll, { passive: true });
-arts.forEach((el) => { const img = el.querySelector("img"); if (img && !img.complete) img.addEventListener("load", update); });
+window.addEventListener("resize", onResize, { passive: true });
+arts.forEach((el) => { const img = el.querySelector("img"); if (img && !img.complete) img.addEventListener("load", () => { measure(); update(); }); });
+if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); update(); });
+measure();
 update();
 
 /* ------------------------------------------------------------
