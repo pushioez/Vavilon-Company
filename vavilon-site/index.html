@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<meta name="theme-color" content="#7e858c" />
+<title>VAVILON — разработка сайтов, ПО и приложений</title>
+<meta name="description" content="Vavilon — студия разработки сайтов, программного обеспечения для автоматизации бизнеса и мобильных приложений. Слаженная команда, отлаженный процесс — кирпичик за кирпичиком." />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@300;400;500&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@300;400;500&display=swap" rel="stylesheet" />
+<link rel="stylesheet" href="css/styles.css" />
+</head>
+<body>
+
+  <!-- ====== BLOCK 0 · INTRO / LOADER (unchanged) ====== -->
+  <div id="intro" class="intro">
+    <div class="intro__inner">
+      <svg class="intro__logo" viewBox="0 0 200 150" fill="none" aria-hidden="true">
+        <!-- ground -->
+        <path class="draw" d="M20 120 H180" />
+        <!-- dome -->
+        <path class="draw" d="M40 120 A60 60 0 0 1 160 120" />
+        <!-- brick rows (arcs) -->
+        <path class="draw" d="M52 96 A48 48 0 0 1 148 96" />
+        <path class="draw" d="M64 74 A36 36 0 0 1 136 74" />
+        <path class="draw" d="M78 58 A22 22 0 0 1 122 58" />
+        <!-- vertical brick seams -->
+        <path class="draw" d="M70 120 V97" />
+        <path class="draw" d="M100 120 V97" />
+        <path class="draw" d="M130 120 V97" />
+        <path class="draw" d="M82 96 V75" />
+        <path class="draw" d="M118 96 V75" />
+        <path class="draw" d="M100 74 V58" />
+        <!-- entrance -->
+        <path class="draw" d="M86 120 V104 A14 14 0 0 1 114 104 V120" />
+      </svg>
+      <div class="intro__word">VAVILON</div>
+      <div class="intro__sub">building digital, brick by brick</div>
+    </div>
+  </div>
+
+  <!-- ====== CONSTANT FOG BACKGROUND ====== -->
+  <div class="fog" aria-hidden="true">
+    <div class="fog__base"></div>
+    <svg class="fog__noise" xmlns="http://www.w3.org/2000/svg" preserveAspectRatio="none">
+      <filter id="fogFilter">
+        <feTurbulence type="fractalNoise" baseFrequency="0.011 0.017" numOctaves="3" seed="11" stitchTiles="stitch">
+          <animate attributeName="baseFrequency" dur="34s" values="0.011 0.017;0.015 0.012;0.009 0.018;0.011 0.017" repeatCount="indefinite" />
+        </feTurbulence>
+        <feColorMatrix type="matrix" values="0 0 0 0 0.66  0 0 0 0 0.70  0 0 0 0 0.75  0 0 0 0.55 0" />
+      </filter>
+      <rect width="100%" height="100%" filter="url(#fogFilter)" />
+    </svg>
+    <div class="fog__drift fog__drift--a"></div>
+    <div class="fog__drift fog__drift--b"></div>
+  </div>
+
+  <!-- ====== LEVITATING ARTIFACT STAGE (fixed, scroll-driven) ====== -->
+  <div class="stage" aria-hidden="true">
+    <div class="art art--a" data-block="1"><img src="assets/a.jpg" alt="" decoding="async" /></div>
+    <div class="art art--b" data-block="2"><img src="assets/b.jpg" alt="" decoding="async" /></div>
+    <div class="art art--c" data-block="3"><img src="assets/c.jpg" alt="" decoding="async" /></div>
+    <div class="art art--d" data-block="4"><img src="assets/d.jpg" alt="" decoding="async" /></div>
+    <div class="art art--e" data-block="5"><img src="assets/e.jpg" alt="" decoding="async" /></div>
+    <div class="art art--a2" data-block="6"><img src="assets/a.jpg" alt="" decoding="async" /></div>
+  </div>
+
+  <!-- atmosphere + HUD frame -->
+  <div class="grain" aria-hidden="true"></div>
+  <div class="vignette" aria-hidden="true"></div>
+  <div class="hud-shade hud-shade--top" aria-hidden="true"></div>
+  <div class="hud-shade hud-shade--bottom" aria-hidden="true"></div>
+
+  <!-- ====== FIXED UI ====== -->
+  <header class="ui ui--top">
+    <a href="#b1" class="brand">
+      <span class="brand__mark" aria-hidden="true">
+        <svg viewBox="0 0 40 30" fill="none"><path d="M4 26 H36 M9 26 A11 11 0 0 1 31 26 M16 26 V19 A4 4 0 0 1 24 19 V26" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+      </span>
+      <span class="brand__block">
+        <span class="brand__name">VAVILON<sup>®</sup></span>
+        <span class="brand__cr">© 2026 vavilon studio<br>all rights reserved</span>
+      </span>
+    </a>
+    <nav class="topnav">
+      <a href="#b2">Идея</a>
+      <a href="#b3">Процесс</a>
+      <a href="#b4">Услуги</a>
+      <a href="#b6">Контакты</a>
+    </nav>
+  </header>
+
+  <div class="ui ui--bottom">
+    <button id="soundBtn" class="sound" aria-pressed="false">
+      <span class="sound__ico" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none"><path d="M4 9v6h4l5 4V5L8 9H4z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/><path class="sound__wave" d="M16 9.5a3.5 3.5 0 0 1 0 5M18.5 7a7 7 0 0 1 0 10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+      </span>
+      <span id="soundLabel">Sound: OFF</span>
+    </button>
+    <div class="status"><span class="status__dot"></span><span id="statusText">SYS · READY</span></div>
+  </div>
+
+  <!-- scroll progress rail -->
+  <div class="rail" aria-hidden="true"><div class="rail__fill" id="railFill"></div></div>
+
+  <!-- ====== SCROLLABLE CONTENT ====== -->
+  <main>
+
+    <!-- BLOCK 1 · OFFER (a.jpg) -->
+    <section id="b1" class="panel panel--left" data-block="1">
+      <div class="hold hold--hero">
+        <div class="kicker">VAVILON · studio of digital craft</div>
+        <h1 class="display">Строим цифровые<br><span class="display__hl">продукты</span></h1>
+        <p class="lead">Сайты, ПО для автоматизации бизнеса и мобильные приложения. Слаженная команда и выверенный процесс — кирпичик за кирпичиком.</p>
+        <div class="cta-row">
+          <a class="btn btn--solid" href="https://t.me/VavilonCloud" target="_blank" rel="noopener">Получить консультацию</a>
+          <a class="btn btn--line" href="https://t.me/Vavilon_Portfolio" target="_blank" rel="noopener">Смотреть портфолио</a>
+        </div>
+      </div>
+      <div class="scrollhint" aria-hidden="true"><span>прокрутите вниз</span><i></i></div>
+    </section>
+
+    <!-- BLOCK 2 · PHILOSOPHY (b.jpg) -->
+    <section id="b2" class="panel panel--left" data-block="2">
+      <div class="hold">
+        <div class="label"><span class="label__no">01</span> философия</div>
+        <h2 class="title">Иглу — метафора<br>нашей работы</h2>
+        <p class="copy">Идеальное иглу не появляется случайно. Каждый снежный блок усиливает соседний, а вся конструкция держится за счёт слаженности.</p>
+        <p class="copy">Так и мы: <em>кирпичик</em> — это этап, а собранное <em>иглу</em> — готовый продукт, который стоит прочно и выглядит цельно.</p>
+      </div>
+    </section>
+
+    <!-- BLOCK 3 · PROCESS (c.jpg) -->
+    <section id="b3" class="panel panel--left" data-block="3">
+      <div class="hold">
+        <div class="label"><span class="label__no">02</span> процесс</div>
+        <h2 class="title">Семь кирпичиков<br>одного иглу</h2>
+        <ol class="steps">
+          <li><b>Бриф и идея.</b> Погружаемся в бизнес, цели и аудиторию.</li>
+          <li><b>Проектирование · UX.</b> Карта экранов, сценарии, логика.</li>
+          <li><b>Дизайн · UI.</b> Визуальный язык, ритм, анимации.</li>
+          <li><b>Разработка.</b> Чистый код, скорость, надёжность.</li>
+          <li><b>Тестирование · QA.</b> Проверяем на всех устройствах.</li>
+          <li><b>Запуск.</b> Деплой, аналитика, плавный старт.</li>
+          <li><b>Поддержка.</b> Развиваем, обновляем, оберегаем.</li>
+        </ol>
+      </div>
+    </section>
+
+    <!-- BLOCK 4 · SERVICES (d.jpg) -->
+    <section id="b4" class="panel panel--left" data-block="4">
+      <div class="hold">
+        <div class="label"><span class="label__no">03</span> услуги</div>
+        <h2 class="title">Что мы строим</h2>
+        <ul class="svc">
+          <li>
+            <h3>Сайты и веб-приложения</h3>
+            <p>Лендинги, корпоративные сайты, магазины и сложные веб-сервисы с продуманным UX.</p>
+          </li>
+          <li>
+            <h3>ПО для автоматизации</h3>
+            <p>CRM, ERP, личные кабинеты, боты и интеграции — снимаем рутину, ускоряем процессы.</p>
+          </li>
+          <li>
+            <h3>Мобильные приложения</h3>
+            <p>iOS и Android: удобные, быстрые и стабильные приложения для людей и команд.</p>
+          </li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- BLOCK 5 · PORTFOLIO (e.jpg) -->
+    <section id="b5" class="panel panel--center" data-block="5">
+      <div class="hold hold--center">
+        <div class="label label--center"><span class="label__no">04</span> работы</div>
+        <h2 class="title">Готовое иглу<br>лучше любых слов</h2>
+        <p class="copy copy--center">Загляните в портфолио — собранные проекты, кейсы и детали реализации.</p>
+        <a class="btn btn--solid btn--lg" href="https://t.me/Vavilon_Portfolio" target="_blank" rel="noopener">Открыть портфолио в Telegram</a>
+      </div>
+    </section>
+
+    <!-- BLOCK 6 · CONTACTS (a.jpg + dark overlay) -->
+    <section id="b6" class="panel panel--center panel--dark" data-block="6">
+      <div class="hold hold--center">
+        <div class="label label--center"><span class="label__no">05</span> контакты</div>
+        <h2 class="title">Соберём ваше<br>иглу вместе</h2>
+        <p class="copy copy--center">Напишите нам — обсудим задачу и предложим решение.</p>
+
+        <div class="contacts">
+          <a class="contact" href="https://t.me/VavilonCloud" target="_blank" rel="noopener">
+            <span class="contact__k">Telegram</span>
+            <span class="contact__v">@VavilonCloud</span>
+          </a>
+          <a class="contact" href="https://t.me/+79264436626" target="_blank" rel="noopener">
+            <span class="contact__k">Телефон · только Telegram</span>
+            <span class="contact__v">+7 926 443 6626</span>
+          </a>
+          <a class="contact" href="mailto:vaviloncompany@inbox.ru">
+            <span class="contact__k">Почта</span>
+            <span class="contact__v">vaviloncompany@inbox.ru</span>
+          </a>
+          <a class="contact" href="https://t.me/Vavilon_Portfolio" target="_blank" rel="noopener">
+            <span class="contact__k">Портфолио</span>
+            <span class="contact__v">t.me/Vavilon_Portfolio</span>
+          </a>
+        </div>
+
+        <a class="btn btn--terminal btn--lg" href="https://t.me/VavilonCloud" target="_blank" rel="noopener">
+          <span class="btn__prompt">&gt;_</span> Получить консультацию
+        </a>
+      </div>
+      <footer class="foot">
+        <span>VAVILON<sup>®</sup></span>
+        <span>© 2026 · разработка сайтов · ПО · приложения</span>
+      </footer>
+    </section>
+
+  </main>
+
+  <script src="js/main.js"></script>
+</body>
+</html>
