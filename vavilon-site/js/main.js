@@ -11,16 +11,41 @@ const lerp = (a, b, t) => a + (b - a) * t;
 const smoothstep = (a, b, x) => { x = clamp((x - a) / (b - a), 0, 1); return x * x * (3 - 2 * x); };
 
 /* ------------------------------------------------------------
-   INTRO loader — show the logo, then reveal the story
+   INTRO loader — keep the logo on screen as a REAL loading screen.
+   We preload the assets the first view actually needs (logo, the
+   mountain backdrop, the first artifact) plus the web fonts, show a
+   progress bar, then reveal. A hard timeout guarantees we never hang
+   on a slow connection (this was the iPad "loads badly" problem:
+   the old code revealed on a fixed timer, before the images were ready).
 ------------------------------------------------------------ */
-window.addEventListener("load", () => {
+const intro = document.getElementById("intro");
+const introFill = document.getElementById("introFill");
+let revealed = false;
+function revealSite() {
+  if (revealed) return;
+  revealed = true;
   measure();
   update();
-  setTimeout(() => {
-    document.getElementById("intro")?.classList.add("is-done");
-    update();
-  }, prefersReduced ? 300 : 2300);
-});
+  // let the logo's entrance animation breathe for a beat before the wipe
+  setTimeout(() => { intro?.classList.add("is-done"); update(); }, prefersReduced ? 60 : 520);
+}
+(function bootLoader() {
+  const assets = ["assets/logo.png", "assets/mountains.jpg", "assets/a.jpg"];
+  let loaded = 0;
+  const bump = () => {
+    loaded++;
+    if (introFill) introFill.style.width = Math.round((loaded / assets.length) * 100) + "%";
+  };
+  const one = (src) => new Promise((res) => {
+    const im = new Image();
+    im.onload = im.onerror = () => { bump(); res(); };
+    im.src = src;
+  });
+  const fonts = (document.fonts && document.fonts.ready) ? document.fonts.ready : Promise.resolve();
+  const ready = Promise.all([...assets.map(one), fonts]);
+  const cap = new Promise((res) => setTimeout(res, prefersReduced ? 400 : 6000));
+  Promise.race([ready, cap]).then(revealSite);
+})();
 
 /* ------------------------------------------------------------
    ARTIFACT STAGE — scroll-driven enter/exit per block
@@ -36,16 +61,20 @@ const STATUS = ["01 · OFFER", "02 · IDEA", "03 · PROCESS", "04 · BUILD", "05
    scroll frame, so update() never forces a synchronous reflow */
 let centers = [];
 let maxScroll = 0;
+let viewH = 0;   // cached viewport height — frozen against mobile address-bar
+let viewW = 0;   // toggles so the scroll math doesn't jump while scrolling
 function measure() {
+  viewH = window.innerHeight;
+  viewW = window.innerWidth;
   centers = panels.map((p) => p.offsetTop + p.offsetHeight / 2);
-  maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+  maxScroll = document.documentElement.scrollHeight - viewH;
 }
 
 /* continuous block position in [0 .. n-1]; integer i = section i centered */
 function blockPos() {
   const n = centers.length;
   if (!n) return 0;
-  const mid = window.scrollY + window.innerHeight / 2;
+  const mid = window.scrollY + viewH / 2;
   if (mid <= centers[0]) return 0;
   if (mid >= centers[n - 1]) return n - 1;
   for (let i = 0; i < n - 1; i++) {
@@ -143,7 +172,15 @@ function onScroll() {
     requestAnimationFrame(() => { update(); ticking = false; });
   }
 }
-function onResize() { measure(); update(); }
+function onResize() {
+  // Only re-measure on a real width change (orientation / window resize).
+  // Mobile browsers fire resize with a *height-only* change every time the
+  // address bar shows/hides during scroll; re-measuring there recomputed the
+  // whole scene mid-scroll and made it lurch sideways — so we skip it.
+  if (window.innerWidth === viewW) return;
+  measure();
+  update();
+}
 window.addEventListener("scroll", onScroll, { passive: true });
 window.addEventListener("resize", onResize, { passive: true });
 arts.forEach((el) => { const img = el.querySelector("img"); if (img && !img.complete) img.addEventListener("load", () => { measure(); update(); }); });

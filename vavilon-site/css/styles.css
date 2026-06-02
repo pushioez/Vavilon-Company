@@ -35,7 +35,14 @@ img{display:block}
 ============================================================ */
 .intro{
   position:fixed;inset:0;z-index:200;
-  background:radial-gradient(120% 100% at 50% 42%, #14181d 0%, #080a0c 100%);
+  /* snowy-mountain backdrop. The photo's sky is bright white at the top, which
+     would swallow the white VAVILON logo — so a dark scrim (stronger toward the
+     centre and bottom) sits over it to hold contrast and tie into the fog below. */
+  background:
+    radial-gradient(125% 95% at 50% 44%, rgba(8,10,13,.72) 0%, rgba(8,10,13,.5) 42%, rgba(8,10,13,.66) 100%),
+    linear-gradient(180deg, rgba(8,10,13,.55) 0%, rgba(8,10,13,.2) 30%, rgba(8,10,13,.78) 100%),
+    url("../assets/mountains.jpg") center 38%/cover no-repeat,
+    #080a0c;
   display:grid;place-items:center;
   transition:opacity .9s ease, visibility .9s;
 }
@@ -56,6 +63,19 @@ img{display:block}
 .intro__sub{
   font-family:var(--mono);font-size:10px;letter-spacing:.3em;color:rgba(255,255,255,.5);
   text-transform:uppercase;opacity:0;animation:fadeUp .8s ease 1.4s forwards;
+}
+/* real loading bar — width is driven from JS as assets/fonts resolve, so the
+   logo screen stays up as a genuine preloader (fixes the iPad "loads badly" jump
+   where the scene appeared before its images were ready). */
+.intro__bar{
+  width:min(46vw,200px);height:2px;margin-top:18px;border-radius:2px;
+  background:rgba(255,255,255,.16);overflow:hidden;
+  opacity:0;animation:fadeUp .8s ease 1.5s forwards;
+}
+.intro__fill{
+  display:block;width:0;height:100%;border-radius:2px;
+  background:linear-gradient(90deg, var(--accent), #fff);
+  transition:width .35s var(--ease);
 }
 @keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
 @keyframes logoIn{
@@ -99,7 +119,12 @@ img{display:block}
 /* ============================================================
    LEVITATING ARTIFACT STAGE
 ============================================================ */
-.stage{position:fixed;inset:0;z-index:1;pointer-events:none}
+/* overflow:hidden clips the scaled/rotated ring (and any artifact that flies
+   off-screen) to the viewport. Fixed layers aren't clipped by body's
+   overflow-x:hidden, so without this the spun ring leaked past the right edge
+   on phones and the page drifted sideways on scroll-up. The ring's circular
+   mask already fades it out well inside the viewport, so the clip is invisible. */
+.stage{position:fixed;inset:0;z-index:1;pointer-events:none;overflow:hidden}
 .art{
   position:absolute;inset:0;
   opacity:0;
@@ -189,14 +214,18 @@ img{display:block}
   box-shadow:0 0 9px rgba(84,208,138,.7);animation:pulse 2.4s ease-in-out infinite}
 @keyframes pulse{0%,100%{opacity:.35}50%{opacity:1}}
 
-.rail{position:fixed;top:0;right:0;width:2px;height:100vh;height:100dvh;z-index:25;background:var(--line-soft)}
+/* svh (small viewport height), not dvh: dvh changes every time the mobile
+   address bar shows/hides during scroll, which resized the rail/panels mid-scroll
+   and made the scene lurch. svh stays fixed to the smallest viewport, so the
+   geometry JS caches stays valid while scrolling. */
+.rail{position:fixed;top:0;right:0;width:2px;height:100vh;height:100svh;z-index:25;background:var(--line-soft)}
 .rail__fill{width:100%;height:0;background:linear-gradient(var(--ink),rgba(255,255,255,.3))}
 
 /* ============================================================
    PANELS / CONTENT
 ============================================================ */
 main{position:relative;z-index:10}
-.panel{position:relative;min-height:100vh;min-height:100dvh;padding:120px var(--pad) 110px;
+.panel{position:relative;min-height:100vh;min-height:100svh;padding:120px var(--pad) 110px;
   display:flex;flex-direction:column;justify-content:center}
 .panel--left{align-items:flex-start}
 .panel--center{align-items:center;text-align:center}
@@ -204,8 +233,13 @@ main{position:relative;z-index:10}
 /* legibility scrim that also masks baked watermarks on the left edge */
 .panel--left::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
   background:linear-gradient(90deg, rgba(12,15,18,.62) 0%, rgba(12,15,18,.28) 34%, transparent 62%)}
+/* block 6 (contacts) sits over a.jpg whose bright snowy foreground washed out
+   the footer/contacts. Layer a strong bottom-anchored darken over the radial
+   scrim so the lower third of the viewport reads near-black. */
 .panel--dark::before{content:"";position:absolute;inset:0;z-index:-1;pointer-events:none;
-  background:radial-gradient(120% 100% at 50% 50%, rgba(10,13,16,.55), rgba(8,10,13,.82))}
+  background:
+    linear-gradient(0deg, rgba(6,8,10,.96) 0%, rgba(7,9,12,.8) 26%, rgba(8,10,13,.34) 58%, transparent 100%),
+    radial-gradient(120% 100% at 50% 46%, rgba(10,13,16,.6), rgba(8,10,13,.88))}
 /* block 1 only: strong top mask hides baked IGLOO/Builders watermark on a.jpg
    (a.jpg has no HUD labels to preserve, unlike b/c/d) */
 #b1::after{content:"";position:absolute;left:0;right:0;top:0;height:36vh;z-index:-1;pointer-events:none;
