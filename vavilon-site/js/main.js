@@ -129,8 +129,12 @@ function applyState(el, st) {
 }
 
 let lastActive = -1;
-function update() {
-  const pos = blockPos();
+let renderPos = 0;          // continuously eased block position the scene is drawn at
+let lastRailH = "";
+let lastStatus = "";
+
+/* draw the whole scene at a given continuous block position (no easing here) */
+function render(pos) {
   const i = Math.floor(pos);
   const frac = pos - i;
   const t = smoothstep(0.18, 0.82, frac); // rest at each block, swap mid-way
@@ -157,21 +161,57 @@ function update() {
     applyState(el, st);
   }
 
-  // scroll rail (uses cached maxScroll)
-  if (railFill) railFill.style.height = (maxScroll > 0 ? clamp(window.scrollY / maxScroll, 0, 1) * 100 : 0).toFixed(2) + "%";
+  // scroll rail — tied to the TRUE scroll position (not the eased one) so it
+  // stays accurate. Guarded so a cursor-only frame writes nothing.
+  const railH = (maxScroll > 0 ? clamp(window.scrollY / maxScroll, 0, 1) * 100 : 0).toFixed(2) + "%";
+  if (railFill && railH !== lastRailH) { railFill.style.height = railH; lastRailH = railH; }
 
   // status readout
   const b = clamp(Math.round(pos), 0, STATUS.length - 1);
-  if (statusText) statusText.textContent = STATUS[b];
+  if (statusText && STATUS[b] !== lastStatus) { statusText.textContent = STATUS[b]; lastStatus = STATUS[b]; }
 }
 
-let ticking = false;
-function onScroll() {
-  if (!ticking) {
-    ticking = true;
-    requestAnimationFrame(() => { update(); ticking = false; });
+/* snap (no animation) — used on load / resize / reveal where we want the scene
+   to be instantly correct rather than easing in from a stale position */
+function update() { renderPos = blockPos(); render(renderPos); }
+
+/* ------------------------------------------------------------
+   SMOOTH RENDER LOOP
+   A single rAF drives both the scene easing and the custom cursor. The scene
+   eases toward the scroll-derived target with a frame-rate-independent
+   half-life, so fast scrolls feel weighty and crossfades stay buttery instead
+   of snapping to each frame's raw scroll value. The loop parks itself the
+   moment everything has settled, so an idle page costs nothing.
+------------------------------------------------------------ */
+const SCENE_HALFLIFE = 0.11;   // seconds — the scene's gap to target halves every 110ms
+let running = false;
+let rafId = 0;
+let lastFrame = 0;
+const cursor = { active: false, step: () => false };
+
+function loop(now) {
+  const dt = lastFrame ? Math.min(now - lastFrame, 50) : 16.7;
+  lastFrame = now;
+  let busy = false;
+
+  if (prefersReduced) {
+    renderPos = blockPos();
+  } else {
+    const target = blockPos();
+    const k = 1 - Math.pow(2, -dt / 1000 / SCENE_HALFLIFE); // frame-rate independent
+    renderPos += (target - renderPos) * k;
+    if (Math.abs(target - renderPos) > 0.0006) busy = true; else renderPos = target;
   }
+  render(renderPos);
+
+  if (cursor.active && cursor.step(dt)) busy = true;
+
+  if (busy) { rafId = requestAnimationFrame(loop); }
+  else { running = false; rafId = 0; lastFrame = 0; }
 }
+function kick() { if (!running) { running = true; lastFrame = 0; rafId = requestAnimationFrame(loop); } }
+
+function onScroll() { kick(); }
 function onResize() {
   // Only re-measure on a real width change (orientation / window resize).
   // Mobile browsers fire resize with a *height-only* change every time the
@@ -187,6 +227,61 @@ arts.forEach((el) => { const img = el.querySelector("img"); if (img && !img.comp
 if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { measure(); update(); });
 measure();
 update();
+
+/* ------------------------------------------------------------
+   DESIGNER CURSOR — a trailing outline ring + a crisp dot, painted with
+   mix-blend-mode:difference so they stay visible over light snow and dark fog
+   alike. Fine-pointer (mouse) devices only; touch keeps its native behaviour
+   and never pays for this. The ring is eased inside the shared loop above.
+------------------------------------------------------------ */
+(function customCursor() {
+  if (!window.matchMedia || !window.matchMedia("(hover:hover) and (pointer:fine)").matches) return;
+
+  const dot = document.createElement("div"); dot.className = "cursor cursor--dot";
+  const ring = document.createElement("div"); ring.className = "cursor cursor--ring";
+  document.body.append(ring, dot);
+  const root = document.documentElement;
+  root.classList.add("has-cursor");
+
+  let mx = window.innerWidth / 2, my = window.innerHeight / 2; // pointer target
+  let rx = mx, ry = my;                                        // eased ring
+  const RING_HALFLIFE = 0.05;                                  // 50ms — snappier than the scene
+  const place = (el, x, y) => { el.style.transform = `translate3d(${x}px,${y}px,0) translate(-50%,-50%)`; };
+
+  cursor.active = true;
+  cursor.step = (dt) => {
+    const k = prefersReduced ? 1 : 1 - Math.pow(2, -dt / 1000 / RING_HALFLIFE);
+    rx += (mx - rx) * k; ry += (my - ry) * k;
+    place(ring, rx, ry);
+    return Math.abs(mx - rx) > 0.2 || Math.abs(my - ry) > 0.2;
+  };
+
+  window.addEventListener("mousemove", (e) => {
+    mx = e.clientX; my = e.clientY;
+    place(dot, mx, my);                       // dot is instant; ring trails
+    if (!root.classList.contains("cursor-on")) root.classList.add("cursor-on");
+    kick();
+  }, { passive: true });
+
+  // hide when the pointer leaves the window; mousemove re-shows it
+  window.addEventListener("mouseout", (e) => { if (!e.relatedTarget) root.classList.remove("cursor-on"); });
+  window.addEventListener("blur", () => root.classList.remove("cursor-on"));
+
+  // grow + fill the ring over interactive targets
+  const HOT = "a, button, [role='button']";
+  document.addEventListener("mouseover", (e) => {
+    if (e.target.closest && e.target.closest(HOT)) root.classList.add("cursor-hot");
+  });
+  document.addEventListener("mouseout", (e) => {
+    const to = e.relatedTarget;
+    if (e.target.closest && e.target.closest(HOT) && !(to && to.closest && to.closest(HOT)))
+      root.classList.remove("cursor-hot");
+  });
+
+  // quick press feedback
+  window.addEventListener("mousedown", () => root.classList.add("cursor-down"));
+  window.addEventListener("mouseup", () => root.classList.remove("cursor-down"));
+})();
 
 /* ------------------------------------------------------------
    CONTENT reveal — fade each block in when it becomes active

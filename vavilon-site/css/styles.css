@@ -347,6 +347,28 @@ main{position:relative;z-index:10}
 .panel.is-active .scrollhint{opacity:1}
 
 /* ============================================================
+   DESIGNER CURSOR (fine-pointer only — elements injected by JS)
+============================================================ */
+/* hide the native cursor everywhere once the custom one is active */
+html.has-cursor, html.has-cursor *{cursor:none !important}
+.cursor{
+  position:fixed;top:0;left:0;z-index:9999;pointer-events:none;border-radius:50%;
+  mix-blend-mode:difference;opacity:0;will-change:transform;
+  transition:opacity .3s ease, width .32s var(--ease), height .32s var(--ease),
+             background .32s var(--ease), border-color .32s var(--ease);
+}
+.cursor-on .cursor{opacity:1}
+.cursor--dot{width:7px;height:7px;background:#fff}
+.cursor--ring{width:34px;height:34px;border:1px solid #fff}
+/* over links/buttons the ring blooms and fills, the dot tucks away — classic
+   "target lock" feel that reads on any backdrop thanks to the difference blend */
+.cursor-hot .cursor--ring{width:54px;height:54px;background:rgba(255,255,255,.16);border-color:#fff}
+.cursor-hot .cursor--dot{opacity:0}
+/* brief press squash */
+.cursor-down .cursor--ring{width:26px;height:26px}
+.cursor-down.cursor-hot .cursor--ring{width:44px;height:44px}
+
+/* ============================================================
    RESPONSIVE
 ============================================================ */
 @media(max-width:860px){
